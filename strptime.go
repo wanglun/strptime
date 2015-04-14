@@ -57,18 +57,22 @@ import (
 // If a unsupported format specifier is provided, it will be ignored and matching
 // text will be skipped. To receive errors for unsupported formats, use ParseStrict or call Check.
 func Parse(value, format string) (time.Time, error) {
-	return strptime(value, format, true)
+	return strptime(value, format, true, nil)
+}
+
+func ParseInLocation(value, format string, loc *time.Location) (time.Time, error) {
+	return strptime(value, format, true, loc)
 }
 
 // ParseStrict returns ErrFormatUnsupported for unsupported formats strings, but is otherwise
 // identical to Parse.
 func ParseStrict(value, format string) (time.Time, error) {
-	return strptime(value, format, false)
+	return strptime(value, format, false, nil)
 }
 
 // MustParse is a wrapper for Parse which panics on any error.
 func MustParse(value, format string) time.Time {
-	t, err := strptime(value, format, true)
+	t, err := strptime(value, format, true, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -92,7 +96,7 @@ func Check(format string) error {
 	return nil
 }
 
-func strptime(value, format string, ignoreUnsupported bool) (time.Time, error) {
+func strptime(value, format string, ignoreUnsupported bool, loc *time.Location) (time.Time, error) {
 	parseStr := ""
 	parseFmt := ""
 	vi := 0
@@ -173,7 +177,11 @@ func strptime(value, format string, ignoreUnsupported bool) (time.Time, error) {
 		return time.Time{}, ErrFormatMismatch
 	}
 
-	return time.Parse(parseFmt, parseStr)
+	if loc != nil {
+		return time.ParseInLocation(parseFmt, parseStr, loc)
+	} else {
+		return time.Parse(parseFmt, parseStr)
+	}
 }
 
 var (
